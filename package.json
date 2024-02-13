@@ -1,0 +1,22 @@
+{
+  "name": "omron-hostlink",
+  "version": "0.0.1",
+  "description": "A nodejs library for Omron's Host Link protocol",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Omron",
+    "serial",
+    "comunication",
+    "library",
+    "hostlink",
+    "Host",
+    "Link",
+    "protocol",
+    "plc"
+  ],
+  "author": "Hector E. Socarras",
+  "license": "MIT"
+}
