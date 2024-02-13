@@ -6,7 +6,7 @@ channelCfg = {
     timeout:250,
 }
 
-let client = nodbus.createTcpClient();
+let hclient = nodbus.createTcpClient();
 client.addChannel('device', 'tcp1', channelCfg);
 
 client.on('connection', (id)=>{
