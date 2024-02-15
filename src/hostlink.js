@@ -5,6 +5,7 @@
 * @version 1.0.0
 */
 
+const utils = require('./utils');
 
 /** Defining protocol constant */
 const beginer_char = 0x40 //@
@@ -108,27 +109,56 @@ class HostlinkProtocol {
     }
     
     //TIMER/COUNTER PV READ – – RC
-     /**
-    * Function to make the command block Holding RC Area Read  
+    /**
+    * Function to make the command block Timer/Counter PV Read  
     * @param {number} unitNo Hostlink unit number in multilink system
     * @param {number} beginningWord first DM word to read, start at 0.
     * @param {number} numberWords number of consecutive words to read.
     * @throws {RangeError} Throw an error if unit number is out 0 t 31 range.
     * @return {Array} Buffer array with frames.
     */
-     commandRCAreaRead(unitNo, beginningWord = 0, numberWords = 1){
+    commandTCPvRead(unitNo, beginningWord = 0, numberWords = 1){
 
         //check range for beginningword
         if (beginningWord < 0 && beginningWord > 4095){
-            throw new RangeError("Error at CR area read, beginning word must be between 0 and 4095")
+            throw new RangeError("Error at RC area read, beginning word must be between 0 and 4095")
         }
 
-        if (numberWords < 1 && numberWords > 512){
-            throw new RangeError("Error at HR area read, number of words must be between 1 and 2048")
+        if (numberWords < 1 && numberWords > 2048){
+            throw new RangeError("Error at RC area read, number of words must be between 1 and 2048")
         }
         
         let frameArray = [];
         let commandBuffer = this.commandAreaRead(unitNo, 'RC', beginningWord, numberWords);
+        
+        frameArray.push(commandBuffer);
+
+        return frameArray;
+               
+    }
+
+    //TIMER/COUNTER Status READ – – RG
+    /**
+    * Function to make the command block Timer/Counter Status RG Read  
+    * @param {number} unitNo Hostlink unit number in multilink system
+    * @param {number} beginningWord first DM word to read, start at 0.
+    * @param {number} numberWords number of consecutive words to read.
+    * @throws {RangeError} Throw an error if unit number is out 0 t 31 range.
+    * @return {Array} Buffer array with frames.
+    */
+    commandTCStatusRead(unitNo, beginningWord = 0, numberWords = 1){
+
+        //check range for beginningword
+        if (beginningWord < 0 && beginningWord > 4095){
+            throw new RangeError("Error at Timer/Counter area read, beginning word must be between 0 and 4095")
+        }
+
+        if (numberWords < 1 && numberWords > 2048){
+            throw new RangeError("Error at Timer/Counter area read, number of words must be between 1 and 2048")
+        }
+        
+        let frameArray = [];
+        let commandBuffer = this.commandAreaRead(unitNo, 'RG', beginningWord, numberWords);
         
         frameArray.push(commandBuffer);
 
@@ -146,125 +176,78 @@ class HostlinkProtocol {
     */
     commandDmAreaRead(unitNo, beginningWord = 0, numberWords = 1){
         
+        //check range for beginningword
+        if (beginningWord < 0 && beginningWord > 9999){
+            throw new RangeError("Error at DM area read, beginning word must be between 0 and 9999")
+        }
+
+        if (numberWords < 1 && numberWords > 9999){
+            throw new RangeError("Error at DM area read, number of words must be between 1 and 9999")
+        }
+
         let frameArray = [];
-        let commandBuffer = Buffer.alloc(17);
-        commandBuffer[0] = beginer_char;
-
+        let commandBuffer = this.commandAreaRead(unitNo, 'RD', beginningWord, numberWords);
         
-        if (unitNo < 0 && unitNo > 31){
-            throw new RangeError("Error Unit Number must be between 0 and 31")
-        }
-
-        if (unitNo > 9){
-            var strUnitNo = '0' + unitNo.toString(10).toUpperCase()
-        }
-        else{
-            strUnitNo = unitNo.toString(10).toUpperCase()
-        }        
-
-        //copy unit number into command buffer
-        let bufUnitNo = Buffer.from(strUnitNo, 'ascii');
-        bufUnitNo.copy(commandBuffer, 1);
-
-        //copy header into command buffer
-        let bufHeader = Buffer.from('RD', 'ascii');
-        bufHeader.copy(commandBuffer, 3)
-
-        //copy beginning word into command buffer
-        let bufBeginningWord = Buffer.from(beginningWord.toString(10).toUpperCase(), 'ascii');
-        bufBeginningWord.copy(commandBuffer, 5)
-
-        //copy number words into command buffer
-        let bufNumberWords = Buffer.from(numberWords.toString(10).toUpperCase(), 'ascii');
-        bufNumberWords.copy(commandBuffer, 9)
-
-        //copy fcs into command buffer
-        fcs = this.calcFCS(commandBuffer.subarray(0, 13))
-        bufFCS = Buffer.from(fcs.toString(16).toUpperCase(), 'ascii');
-        bufFCS.copy(commandBuffer, 13)
-
-        //Termination charset
-        commandBuffer[14] = terminator_char;
-        commandBuffer[15] = delimitator_char;
-
         frameArray.push(commandBuffer);
 
         return frameArray;
                
     }
 
+    //Auxiliary Area READ – – RJ
     /**
-    * Function to make the command block DM Area Write
-    * @param {String} wordValues
-    * @param {number} unitNo Hostlink address in multilink system
-    * @param {number} startRegister first holding register to read, start at 0.
-    * @param {number} registerQuantity number of holding register to read.
+    * Function to make the command block Auxiliary AR Area Read  
+    * @param {number} unitNo Hostlink unit number in multilink system
+    * @param {number} beginningWord first DM word to read, start at 0.
+    * @param {number} numberWords number of consecutive words to read.
     * @throws {RangeError} Throw an error if unit number is out 0 t 31 range.
-    * @return {array} array of command buffer.
+    * @return {Array} Buffer array with frames.
     */
-    commandDmAreaW(wordValues, unitNo, beginningWord = 0){
+    commandARAreaRead(unitNo, beginningWord = 0, numberWords = 1){
+
+        //check range for beginningword
+        if (beginningWord < 0 && beginningWord > 959){
+            throw new RangeError("Error at AR area read, beginning word must be between 0 and 959")
+        }
+
+        if (numberWords < 1 && numberWords > 2048){
+            throw new RangeError("Error at AR area read, number of words must be between 1 and 960")
+        }
         
-        let commandBufferArray = [];
-        let valuesArray = []
+        let frameArray = [];
+        let commandBuffer = this.commandAreaRead(unitNo, 'RJ', beginningWord, numberWords);
+        
+        frameArray.push(commandBuffer);
 
-        /**
-         * When the frame is greater than allowed frame size the the command block
-         * must be splitten in several frames.
-         * first frame can have a maz length of 131 char that is equivalent to 122 chars in text field length
-         * the rest of frame must have 128 char max that is equivalent to 124 chars in text field length
-         */
-        if (wordValues.length > 118) {
+        return frameArray;
+               
+    }
+    
+    /**
+    * Function to make the command block EM Area Read  
+    * @param {number} unitNo Hostlink unit number in multilink system
+    * @param {number} beginningWord first DM word to read, start at 0.
+    * @param {number} numberWords number of consecutive words to read.
+    * @throws {RangeError} Throw an error if unit number is out 0 t 31 range.
+    * @return {Array} Buffer array with frames.
+    */
+    commandEMAreaRead(unitNo,bankNo, beginningWord = 0, numberWords = 1){
 
-            valuesArray.push(wordValues.slice(0, 118));     //first frame include four bytes from begin word
-            let restValues = wordValues.slice(118)
-
-            while (restValues.length > 124){
-                valuesArray.push(restValues.slice(0, 124));
-                restValues = wordValues.slice(124)
-            }
-            valuesArray.push(wordValues.slice(0));
+        //check range for beginningword
+        if (beginningWord < 0 && beginningWord > 9999){
+            throw new RangeError("Error at EM area read, beginning word must be between 0 and 9999")
         }
 
-        if (valuesArray.length > 1){
-
-            for (i = 0; i < valuesArray.length; i++){
-                
-            }
-
+        if (numberWords < 1 && numberWords > 9999){
+            throw new RangeError("Error at EM area read, number of words must be between 1 and 9999")
         }
-        else{
-            frameLength = valuesArray[0].length + 9
-            commandBuffer = Buffer.alloc(frameLength)
-            commandBuffer[0] = beginer_char;
+        
+        let frameArray = [];
+        let commandBuffer = this.commandAreaRead(unitNo, 'RJ', beginningWord, numberWords);
+        
+        frameArray.push(commandBuffer);
 
-             //copy unit number into command buffer
-            let bufUnitNo = Buffer.from(unitNo.toString(10).toUpperCase(), 'ascii');
-            bufUnitNo.copy(commandBuffer, 1);
-
-            //copy header into command buffer
-            let bufHeader = Buffer.from('WD', 'ascii');
-            bufHeader.copy(commandBuffer, 3)
-
-            //copy beginning word into command buffer
-            let bufBeginningWord = Buffer.from(beginningWord.toString().toUpperCase(), 'ascii');
-            bufBeginningWord.copy(commandBuffer, 5)
-
-            let bufWriteData = Buffer.from(valuesArray[0].toUpperCase(), 'ascii')
-            bufWriteData.copy(commandBuffer, 7)
-
-            //copy fcs into command buffer
-            fcs = this.calcFCS(commandBuffer.subarray(0, frameLength - 4))
-            buFCS = Buffer.from(fcs.toString(16).toUpperCase(), 'ascii');
-            buFCS.copy(commandBuffer, frameLength - 4)
-
-            commandBuffer[frameLength - 2] = terminator_char;
-            commandBuffer[frameLength - 1] = delimitator_char;
-
-            commandBufferArray.push(commandBuffer)
-        }
-       
-
-        return commandBufferArray;
+        return frameArray;
                
     }
 
@@ -304,12 +287,7 @@ class HostlinkProtocol {
             throw new RangeError("Error Unit Number must be between 0 and 31")
         }
 
-        if (unitNo > 9){
-            var strUnitNo = '0' + unitNo.toString(10).toUpperCase()
-        }
-        else{
-            strUnitNo = unitNo.toString(10).toUpperCase()
-        }        
+        let strUnitNo = utils.num2str(unitNo, 2, 10);
 
         //copy unit number into command buffer
         let bufUnitNo = Buffer.from(strUnitNo, 'ascii');
@@ -320,11 +298,13 @@ class HostlinkProtocol {
         bufHeader.copy(commandBuffer, 3)
 
         //copy beginning word into command buffer
-        let bufBeginningWord = Buffer.from(beginningWord.toString(10).toUpperCase(), 'ascii');
+        let strBeginningWord = utils.num2str(beginningWord, 4, 10);
+        let bufBeginningWord = Buffer.from(strBeginningWord, 'ascii');
         bufBeginningWord.copy(commandBuffer, 5)
 
         //copy number words into command buffer
-        let bufNumberWords = Buffer.from(numberWords.toString(10).toUpperCase(), 'ascii');
+        let strNumberWords = utils.num2str(numberWords, 4, 10);
+        let bufNumberWords = Buffer.from(strNumberWords, 'ascii');
         bufNumberWords.copy(commandBuffer, 9)
 
         //copy fcs into command buffer

@@ -35,8 +35,21 @@ function encodeBuffer(num, encode = true){
 
 }
 
-function decodeBuffer(buf, encode = true){
-    
+/**
+ * Function to encode a number into a string  
+ * @param {number} num Number to encode
+ * @param {number} size Fixed length in char for string. Will be 0 padding
+ * @param {number} radix See Number.prototype.toString() docs
+ * @param {boolean} encode Encode de number in big endian if true otherwhise in litle endian. Default true
+ * @returns {String} Strint with 0 left pading 
+ */
+function num2str(num, size, radix = 10) {
+
+    let strNum = num.toString(radix).toUpperCase();
+    let s = "000000" + num;
+    return s.substring(s.length-size);
 }
 
 module.exports.encodeBuff = encodeBuffer;
+
+module.exports.num2str = num2str;
